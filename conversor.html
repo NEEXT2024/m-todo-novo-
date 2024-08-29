@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Conversor - NEEXT</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            background-color: #121212;
+            color: #FFFFFF;
+        }
+        nav {
+            background-color: #1F1B24;
+            padding: 10px;
+            text-align: center;
+        }
+        nav a {
+            color: #BB86FC;
+            margin: 0 15px;
+            text-decoration: none;
+            font-weight: bold;
+        }
+        nav a:hover {
+            color: #03DAC6;
+        }
+        .container {
+            padding: 20px;
+        }
+        h1 {
+            color: #BB86FC;
+        }
+        label, textarea, button {
+            display: block;
+            margin-bottom: 10px;
+            color: #FFFFFF;
+        }
+        textarea {
+            background-color: #1F1B24;
+            color: #FFFFFF;
+            border: 1px solid #BB86FC;
+            padding: 10px;
+            width: 100%;
+            box-sizing: border-box;
+        }
+        button {
+            background-color: #BB86FC;
+            color: #121212;
+            border: none;
+            padding: 10px 20px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        button:hover {
+            background-color: #03DAC6;
+        }
+        #downloadLink {
+            color: #03DAC6;
+            margin-top: 20px;
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <nav>
+        <a href="index.html">Início</a>
+        <a href="conversor.html">Conversor</a>
+        <a href="contato.html">Contato</a>
+    </nav>
+    <div class="container">
+        <h1>Conversor de Números</h1>
+        <label for="phoneNumbers">Coloque os números aqui, um por linha ou separado por vírgulas:</label>
+        <textarea id="phoneNumbers" rows="10" placeholder="Números aqui..."></textarea>
+        <button onclick="formatNumbers()">Separar por vírgula</button>
+        <button onclick="ensureSingleNumberPerLine()">Organizar</button>
+        <button onclick="removeDuplicatesAndInvalid()">Tirar duplicados</button>
+        <button onclick="generateVCF()">Gerar arquivo</button>
+        <a id="downloadLink" style="display:none;">Baixar VCF</a>
+    </div>
+
+    <script>
+        function formatNumbers() {
+            const textarea = document.getElementById('phoneNumbers');
+            let numbers = textarea.value.trim().split('\n');
+
+            numbers = numbers.map(number => {
+                let trimmedNumber = number.trim();
+                if (trimmedNumber.endsWith(',')) {
+                    trimmedNumber = trimmedNumber.slice(0, -1);
+                }
+                return trimmedNumber ? trimmedNumber + ',' : trimmedNumber;
+            });
+
+            textarea.value = numbers.join('\n');
+        }
+
+        function ensureSingleNumberPerLine() {
+            const textarea = document.getElementById('phoneNumbers');
+            let numbers = textarea.value.split('\n');
+
+            let formattedNumbers = [];
+
+            numbers.forEach(line => {
+                let parts = line.split(',');
+                parts = parts.map(part => part.trim()).filter(part => part !== '');
+                formattedNumbers = formattedNumbers.concat(parts);
+            });
+
+            textarea.value = formattedNumbers.join('\n');
+        }
+
+        function removeDuplicatesAndInvalid() {
+            const textarea = document.getElementById('phoneNumbers');
+            let numbers = textarea.value.split('\n');
+
+            const seen = new Set();
+            const validNumbers = [];
+
+            numbers.forEach(number => {
+                const trimmedNumber = number.trim();
+
+                const isValid = /^[+\d\s()-]{10,}$/.test(trimmedNumber);
+
+                if (isValid) {
+                    if (!seen.has(trimmedNumber)) {
+                        seen.add(trimmedNumber);
+                        validNumbers.push(trimmedNumber);
+                    }
+                }
+            });
+
+            textarea.value = validNumbers.join('\n');
+        }
+
+        function generateVCF() {
+            const phoneNumbers = document.getElementById('phoneNumbers').value.trim().split('\n');
+            let vcfData = '';
+            
+            phoneNumbers.forEach((number, index) => {
+                const trimmedNumber = number.trim();
+                if (trimmedNumber) {
+                    const numberWithoutComma = trimmedNumber.endsWith(',') ? trimmedNumber.slice(0, -1) : trimmedNumber;
+                    vcfData += `BEGIN:VCARD\nVERSION:3.0\nFN:made neext ${index + 1}\nTEL:${numberWithoutComma}\nEND:VCARD\n`;
+                }
+            });
+            
+            const blob = new Blob([vcfData], { type: 'text/vcard' });
+            const url = URL.createObjectURL(blob);
+            
+            const downloadLink = document.getElementById('downloadLink');
+            downloadLink.href = url;
+            downloadLink.download = 'ACX.vcf';
+            downloadLink.style.display = 'block';
+            downloadLink.textContent = 'Arquivo Neext';
+        }
+    </script>
+</body>
+</html>
